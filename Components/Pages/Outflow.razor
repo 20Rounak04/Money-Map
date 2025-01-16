@@ -1,0 +1,154 @@
+﻿@page "/outflow"
+@using MoneyMap.Services.Interface
+@inject ITransactionService TransactionService
+@inject NavigationManager NavigationManager
+
+<h1>Outflow Transactions</h1>
+<div class="transaction-list-container">
+    <table class="transaction-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Amount</th>
+                <th>Type</th>
+                <th>Tags</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (OutflowTransactions != null && OutflowTransactions.Any())
+            {
+                @foreach (var transaction in OutflowTransactions)
+                {
+                    <tr>
+                        <td>@transaction.Title</td>
+                        <td class="amount debit">Rs.@transaction.Amount</td>
+                        <td>@transaction.TransactionType</td>
+                        <td>
+                            @foreach (var tag in transaction.Tags)
+                            {
+                                <span class="tag">@tag</span>
+                            }
+                        </td>
+                        <td>@transaction.Date.ToString("dd MMMM yyyy")</td>
+                        <td>
+                            <button class="delete-button" @onclick="() => DeleteTransaction(transaction)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center;">No Debit Transactions Found</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<button class="add-transaction-button" @onclick="NavigateToAddTransaction">Add New Transaction</button>
+
+<style>
+    h1 {
+        font-size: 1.8rem;
+        text-align: center;
+        color: #4a4a4a;
+    }
+
+    .transaction-list-container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .transaction-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .transaction-table th,
+        .transaction-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .transaction-table th {
+            background-color: #f1f1f1;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .transaction-table .amount.debit {
+            color: red;
+            font-weight: bold;
+        }
+
+    .tag {
+        background-color: #e1e1e1;
+        border-radius: 3px;
+        padding: 3px 6px;
+        font-size: 12px;
+        margin-right: 5px;
+        display: inline-block;
+    }
+
+    .delete-button {
+        background-color: #ff4d4d;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+        .delete-button:hover {
+            background-color: #cc0000;
+        }
+
+    .add-transaction-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        text-align: center;
+    }
+
+        .add-transaction-button:hover {
+            background-color: #0056b3;
+        }
+</style>
+
+@code {
+    private List<TransactionModel> OutflowTransactions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allTransactions = await TransactionService.GetAllTransactionsAsync();
+        OutflowTransactions = allTransactions
+            .Where(transaction => transaction.TransactionType == "Debit")
+            .ToList();
+    }
+
+    private async Task DeleteTransaction(TransactionModel transaction)
+    {
+        await TransactionService.DeleteTransactionAsync(transaction);
+        OutflowTransactions.Remove(transaction);
+    }
+
+    private void NavigateToAddTransaction()
+    {
+        NavigationManager.NavigateTo("/transaction");
+    }
+}

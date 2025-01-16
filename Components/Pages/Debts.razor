@@ -1,0 +1,217 @@
+﻿@page "/debts"
+@using MoneyMap.Services.Interface
+@inject ITransactionService TransactionService
+@inject NavigationManager NavigationManager
+
+<h1>Manage Debts</h1>
+
+<div class="summary-container">
+    <div class="summary-box">
+        <h2>User Balance</h2>
+        <p>Rs. @UserBalance</p>
+    </div>
+    <div class="summary-box">
+        <h2>Total Debt</h2>
+        <p>Rs. @TotalDebtAmount</p>
+    </div>
+    <div class="summary-box">
+        <h2>Overdue Amount</h2>
+        <p>Rs. @OverdueAmount</p>
+    </div>
+</div>
+
+<div class="transaction-list-container">
+    <table class="transaction-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Start Date</th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (AllDebts != null && AllDebts.Any())
+            {
+                @foreach (var debt in AllDebts)
+                {
+                    <tr>
+                        <td>@debt.Title</td>
+                        <td>@debt.Date.ToString("yyyy-MM-dd")</td>
+                        <td>@debt.DueDate?.ToString("yyyy-MM-dd")</td>
+                        <td>@debt.Amount</td>
+                        <td>@debt.Status</td>
+                        <td>
+                            <button class="clear-button" @onclick="() => UpdateStatus(debt)">Update Status</button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center;">No Debts Found</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<button class="add-transaction-button" @onclick="NavigateToAddTransaction">Add New Debt</button>
+
+<style>
+    h1 {
+        font-size: 1.8rem;
+        text-align: center;
+        color: #4a4a4a;
+    }
+
+    .summary-container {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px auto;
+        max-width: 1200px;
+    }
+
+    .summary-box {
+        background: #f1f1f1;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 30%;
+    }
+
+        .summary-box h2 {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .summary-box p {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+    .transaction-list-container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .transaction-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .transaction-table th,
+        .transaction-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .transaction-table th {
+            background-color: #f1f1f1;
+            font-weight: bold;
+            color: #333;
+        }
+
+    .clear-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+        .clear-button:hover {
+            background-color: #0056b3;
+        }
+
+    .add-transaction-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        text-align: center;
+    }
+
+        .add-transaction-button:hover {
+            background-color: #0056b3;
+        }
+</style>
+
+@code {
+    private List<TransactionModel> AllDebts = new();
+    private decimal UserBalance = 0m;
+    private decimal TotalDebtAmount = 0m;
+    private decimal OverdueAmount = 0m;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var transactions = await TransactionService.GetAllTransactionsAsync();
+        AllDebts = transactions.Where(t => t.TransactionType == "Debt").ToList();
+
+        // Calculate totals and balance
+        CalculateBalance(transactions);
+        CalculateDebtAmounts();
+    }
+
+    private void CalculateBalance(IEnumerable<TransactionModel> transactions)
+    {
+        var inflow = transactions.Where(t => t.TransactionType == "Credit").Sum(t => t.Amount);
+        var outflow = transactions.Where(t => t.TransactionType == "Debit").Sum(t => t.Amount);
+        UserBalance = inflow - outflow;
+    }
+
+    private void CalculateDebtAmounts()
+    {
+        TotalDebtAmount = AllDebts.Sum(d => d.Amount);
+        OverdueAmount = AllDebts
+            .Where(d => d.DueDate.HasValue && d.DueDate.Value < DateTime.Now && d.Status != "Paid")
+            .Sum(d => d.Amount);
+    }
+
+    private async Task UpdateStatus(TransactionModel debt)
+    {
+        // Update the user balance based on the current debt status
+        if (debt.Status == "Pending")
+        {
+            // Subtract the amount when marking as "Paid"
+            UserBalance -= debt.Amount;
+        }
+        else if (debt.Status == "Paid")
+        {
+            // Add the amount when marking back to "Pending"
+            UserBalance += debt.Amount;
+        }
+
+        // Toggle the status
+        debt.Status = debt.Status == "Pending" ? "Paid" : "Pending";
+
+        // Persist the change
+        await TransactionService.UpdateTransactionAsync(debt);
+
+        // Recalculate totals
+        CalculateDebtAmounts();
+    }
+
+    private void NavigateToAddTransaction()
+    {
+        NavigationManager.NavigateTo("/transaction");
+    }
+}

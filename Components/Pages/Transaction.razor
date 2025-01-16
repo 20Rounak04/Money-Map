@@ -1,0 +1,196 @@
+﻿@page "/transaction"
+@using MoneyMap.Services.Interface
+@inject ITransactionService TransactionService
+
+<h1>Add New Transaction</h1>
+<div class="transaction-container">
+    <div>
+        <label for="title">Title</label>
+        <input id="title" type="text" @bind="TransactionModel.Title" placeholder="Enter title" required />
+    </div>
+
+    <div>
+        <label for="amount">Amount</label>
+        <input id="amount" type="number" @bind="TransactionModel.Amount" placeholder="Enter amount" required />
+    </div>
+
+    <div>
+        <label for="transactionType">Transaction Type</label>
+        <select id="transactionType" @bind="TransactionModel.TransactionType">
+            <option value="" disabled selected>Select Transaction Type</option>
+            <option value="Credit">Credit</option>
+            <option value="Debit">Debit</option>
+            <option value="Debt">Debt</option>
+        </select>
+        @if (ShowTransactionTypeError)
+        {
+            <p class="error">Please select a valid transaction type.</p>
+        }
+    </div>
+
+    <div>
+        <label for="tags">Tags</label>
+        <select id="tags" multiple @onchange="HandleTagSelection">
+            @foreach (var tag in TransactionDefaultTags)
+            {
+                <option value="@tag" selected="@TransactionModel.Tags.Contains(tag)">@tag</option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label for="date">Date</label>
+        <input id="date" type="date" @bind="TransactionModel.Date" />
+    </div>
+
+    <div>
+        <label for="dueDate">Due Date (for Debt)</label>
+        <input id="dueDate" type="date" @bind="TransactionModel.DueDate" />
+    </div>
+
+    <div>
+        <label for="sourceOfDebt">Source of Debt</label>
+        <input id="sourceOfDebt" type="text" @bind="TransactionModel.SourceOfDebt" placeholder="Enter source of debt" />
+    </div>
+
+    <div>
+        <label for="notes">Notes</label>
+        <textarea id="notes" @bind="TransactionModel.Notes" placeholder="Optional notes"></textarea>
+    </div>
+
+    <button @onclick="HandleAddTransaction">Add Transaction</button>
+</div>
+
+<style>
+    .transaction-container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        font-family: Arial, sans-serif;
+    }
+
+        .transaction-container h1 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .transaction-container div {
+            margin-bottom: 15px;
+        }
+
+        .transaction-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .transaction-container input,
+        .transaction-container select,
+        .transaction-container textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .transaction-container textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .transaction-container button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+            .transaction-container button:hover {
+                background-color: #0056b3;
+            }
+
+    .error {
+        color: red;
+        font-size: 12px;
+        margin-top: -10px;
+    }
+</style>
+
+@code {
+    private TransactionModel TransactionModel = new()
+        {
+            Tags = new List<string>(),
+            Date = DateTime.Now
+        };
+
+    private List<string> TransactionDefaultTags = new()
+    {
+        "Yearly", "Monthly", "Food", "Drinks", "Clothes", "Gadgets", "Miscellaneous", "Fuel", "Rent", "EMI", "Party"
+    };
+
+    private bool ShowTransactionTypeError = false;
+
+    private async Task HandleAddTransaction()
+    {
+        try
+        {
+            // Validate transaction type
+            if (string.IsNullOrWhiteSpace(TransactionModel.TransactionType))
+            {
+                ShowTransactionTypeError = true;
+                return;
+            }
+
+            ShowTransactionTypeError = false;
+
+            // Handling Debit transaction
+
+
+            // Debug: Log the transaction details
+            Console.WriteLine($"Adding transaction: {TransactionModel.Title}, Amount: {TransactionModel.Amount}, Type: {TransactionModel.TransactionType}");
+
+            // Add transaction via service
+            await TransactionService.AddTransactionAsync(TransactionModel);
+
+            // Success message
+            Console.WriteLine("Transaction added successfully!");
+
+            // Clear the form after success
+            TransactionModel = new TransactionModel
+                {
+                    Tags = new List<string>(),
+                    Date = DateTime.Now
+                };
+        }
+        catch (Exception ex)
+        {
+            // Handle errors gracefully
+            Console.WriteLine($"Error while adding transaction: {ex.Message}");
+        }
+    }
+
+    private void HandleTagSelection(ChangeEventArgs e)
+    {
+        TransactionModel.Tags.Clear();
+        if (e.Value is string singleValue)
+        {
+            TransactionModel.Tags.Add(singleValue);
+        }
+        else if (e.Value is IEnumerable<string> multipleValues)
+        {
+            TransactionModel.Tags.AddRange(multipleValues);
+        }
+    }
+}

@@ -1,0 +1,84 @@
+﻿@page "/register"
+@using MoneyMap.Services.Interface
+@inject IUserService UserService
+@inject NavigationManager Nav
+
+
+<div class="register-body">
+    <h1 class="h3 mb-3 fw-normal text-center">Register New User</h1>
+
+    <div class="form-floating">
+        <input type="text" class="form-control" @bind="Users.Username" placeholder="Username" />
+        <label>Username</label>
+    </div>
+    <div class="form-floating mt-3">
+        <input type="password" class="form-control" @bind="Users.Password" placeholder="Password" />
+        <label>Password</label>
+    </div>
+    <button class="btn btn-lg btn-primary" onclick="@RegisterUser">Register</button>
+
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <div class="text-info mt-3">@Message</div>
+    }
+</div>
+<style>
+    .register-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #d0e6ff; /* Light blue background */
+    }
+
+        .register-body h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 20px;
+        }
+
+    .form-floating {
+        position: relative;
+        width: 350px;
+        margin-bottom: 20px;
+    }
+
+        .form-floating input {
+            background-color: #dcdcdc; /* Light gray input background */
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .form-floating label {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            color: black;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+    button {
+        width: 350px;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        cursor: pointer;
+        background-color: #007bff; /* Blue button */
+        color: white;
+        font-weight: bold;
+    }
+
+    .text-info {
+        font-size: 1rem;
+        color: #007bff; /* Blue for the message text */
+        text-align: center;
+    }
+</style>

@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="MoneyMap.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+   
 </head>
 
 <body>
@@ -24,6 +28,30 @@
     </div>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
+
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>
+        function showBootstrapToast(toastId) {
+            const toastElement = document.querySelector(toastId);
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+        }
+    </script>
+
+    <script>
+        function downloadFile(fileName, content) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+
 
 </body>
 

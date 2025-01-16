@@ -1,4 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using MoneyMap.Services; // Ensure namespace matches your SQLiteService
+using MoneyMap.Services.Interface;
+using Microsoft.Extensions.Logging;
+using MudBlazor.Services;
+
+using MoneyMap.Service;
 
 namespace MoneyMap
 {
@@ -15,9 +20,12 @@ namespace MoneyMap
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddMudServices();
+            builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
 

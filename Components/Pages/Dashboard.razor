@@ -1,0 +1,296 @@
+﻿@page "/dashboard"
+@using MoneyMap.Services.Interface
+@inject NavigationManager NavigationManager
+
+<PageTitle>Dashboard</PageTitle>
+
+<div class="dashboard-page">
+    <div class="header">
+        <h1 class="app-title">MoneyMap</h1>
+        <h3>Welcome</h3>
+    </div>
+
+    <div class="slider-container">
+        <div class="slider">
+            <input type="radio" id="transaction" name="view" @onchange="ShowTransaction" checked="@isTransactionView">
+            <label for="transaction" class="slider-option">Transaction</label>
+
+            <input type="radio" id="debt" name="view" @onchange="ShowDebt" checked="@(!isTransactionView)">
+            <label for="debt" class="slider-option">Debt</label>
+
+            <div class="slider-highlight"></div>
+        </div>
+    </div>
+
+    @if (isTransactionView)
+    {
+        <!-- Transaction View -->
+        <div class="transaction-view">
+            <h3>Total Inflow</h3>
+            <div class="info-card">
+                <p>Rs. @TotalInflow</p>
+                <button class="details-button" @onclick="RedirectToInflow">View Inflow Details</button>
+            </div>
+
+            <h3>Total Outflow</h3>
+            <div class="info-card">
+                <p>Rs. @TotalOutflow</p>
+                <button class="details-button" @onclick="RedirectToOutflow">View Outflow Details</button>
+            </div>
+
+            <h3>Top 5 Transactions</h3>
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var transaction in TopTransactions)
+                    {
+                        <tr>
+                            <td>@transaction.Title</td>
+                            <td class="@transaction.TransactionType.ToLower()">Rs. @transaction.Amount</td>
+                            <td>@transaction.TransactionType</td>
+                            <td>@transaction.Date.ToString("dd MMMM yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <button class="add-transaction-button" @onclick="RedirectToTransaction">Add New Transaction</button>
+        </div>
+    }
+    else
+    {
+        <!-- Debt View -->
+        <div class="debt-view">
+            <h3>Debts Amount Cleared</h3>
+            <div class="info-card">
+                <p>Rs. @DebtClearedAmount</p>
+                <button class="details-button" @onclick="ViewClearedDebt">View Cleared Debt Details</button>
+            </div>
+
+            <h3>Amount Due to be Paid</h3>
+            <div class="info-card">
+                <p>Rs. @PendingDebtAmount</p>
+                <button class="details-button" @onclick="ViewDueDebt">View Due Debt Details</button>
+            </div>
+
+            <h3>All Debts</h3>
+            <table class="debt-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Pending Amount</th>
+                        <th>Start Date</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var debt in AllDebts)
+                    {
+                        <tr>
+                            <td>@debt.Title</td>
+                            <td>Rs. @debt.Amount</td>
+                            <td>@debt.Date.ToString("dd MMMM yyyy")</td>
+                            <td>@(debt.DueDate.HasValue ? debt.DueDate.Value.ToString("dd MMMM yyyy") : "N/A")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject]
+    private ITransactionService TransactionService { get; set; }
+
+    private bool isTransactionView = true;
+
+    // Transaction data
+    private decimal TotalInflow = 0m;
+    private decimal TotalOutflow = 0m;
+    private List<TransactionModel> TopTransactions = new();
+
+    // Debt data derived from transactions
+    private decimal DebtClearedAmount = 0m;
+    private decimal PendingDebtAmount = 0m;
+    private List<TransactionModel> AllDebts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var transactions = await TransactionService.GetAllTransactionsAsync();
+
+            // Transaction data
+            TotalInflow = transactions.Where(t => t.TransactionType == "Credit").Sum(t => t.Amount);
+            TotalOutflow = transactions.Where(t => t.TransactionType == "Debit").Sum(t => t.Amount);
+            TopTransactions = transactions.OrderByDescending(t => t.Amount).Take(5).ToList();
+
+            // Debt data derived from transactions
+            AllDebts = transactions.Where(t => t.TransactionType == "Debt").ToList();
+            DebtClearedAmount = AllDebts.Where(d => d.Amount <= 0).Sum(d => Math.Abs(d.Amount));
+            PendingDebtAmount = AllDebts.Where(d => d.Amount > 0).Sum(d => d.Amount);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing dashboard: {ex.Message}");
+        }
+    }
+
+    private void ShowTransaction(ChangeEventArgs e)
+    {
+        isTransactionView = true;
+    }
+
+    private void ShowDebt(ChangeEventArgs e)
+    {
+        isTransactionView = false;
+    }
+
+    private void RedirectToInflow()
+    {
+        NavigationManager.NavigateTo("/inflow");
+    }
+
+    private void RedirectToOutflow()
+    {
+        NavigationManager.NavigateTo("/outflow");
+    }
+
+    private void RedirectToTransaction()
+    {
+        NavigationManager.NavigateTo("/transaction");
+    }
+
+    private void ViewClearedDebt()
+    {
+        NavigationManager.NavigateTo("/cleared-debt");
+    }
+
+    private void ViewDueDebt()
+    {
+        NavigationManager.NavigateTo("/due-debt");
+    }
+}
+<style>
+    .dashboard-page {
+        padding: 20px;
+        background-color: #f3f8fe;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .app-title {
+        font-size: 24px;
+        color: #4a90e2;
+    }
+
+    .slider-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .slider {
+        display: flex;
+        position: relative;
+        background-color: #e6e6e6;
+        border-radius: 20px;
+        padding: 5px;
+        width: 300px;
+        justify-content: space-between;
+    }
+
+        .slider input {
+            display: none;
+        }
+
+    .slider-option {
+        flex: 1;
+        text-align: center;
+        padding: 10px 0;
+        cursor: pointer;
+        color: #4a90e2;
+        font-weight: bold;
+    }
+
+    .slider input:checked + .slider-option {
+        color: white;
+    }
+
+    .slider-highlight {
+        position: absolute;
+        height: 100%;
+        width: 50%;
+        background-color: #4a90e2;
+        border-radius: 20px;
+        top: 0;
+        transition: transform 0.3s ease;
+    }
+
+    #transaction:checked ~ .slider-highlight {
+        transform: translateX(0);
+    }
+
+    #debt:checked ~ .slider-highlight {
+        transform: translateX(100%);
+    }
+
+    .info-card {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .transaction-table,
+    .debt-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+        .transaction-table th,
+        .debt-table th {
+            background-color: #4a90e2;
+            color: #ffffff;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .transaction-table td,
+        .debt-table td {
+            padding: 10px;
+            border: 1px solid #dddddd;
+        }
+
+    .debit {
+        color: red;
+    }
+
+    .credit {
+        color: green;
+    }
+
+    .add-transaction-button,
+    .details-button {
+        background-color: #4a90e2;
+        color: #ffffff;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+</style>
