@@ -69,16 +69,24 @@
         padding: 10px;
         width: 100%;
         font-size: 1rem;
+        height: 45px; /* Ensures consistent height for inputs */
     }
 
     label {
         position: absolute;
-        top: 50%;
-        left: 10px;
-        transform: translateY(-50%);
+        top: 10px; /* Adjusted to align with input field */
+        left: 15px; /* Added padding for better alignment */
         color: black;
         font-size: 0.9rem;
         pointer-events: none;
+        transition: all 0.2s ease; /* Smooth animation when input is focused */
+    }
+
+    input:focus + label,
+    input:not(:placeholder-shown) + label {
+        top: -10px; /* Moves label above the input field when focused */
+        font-size: 0.75rem; /* Smaller font size for the label */
+        color: #007bff; /* Matches button color */
     }
 
     button {
@@ -94,9 +102,6 @@
     .btn-primary {
         background-color: #007bff; /* Blue button */
         color: white;
-    }
-
-   
     }
 
     .alert {

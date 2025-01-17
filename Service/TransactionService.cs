@@ -19,7 +19,7 @@ namespace MoneyMap.Services
             _transactions.Add(transaction);
             SaveTransactions(_transactions);
             return await Task.FromResult(true);
-            
+
         }
 
         public async Task<List<TransactionModel>> GetAllTransactionsAsync()

@@ -6,7 +6,6 @@
 <MudPopoverProvider />
 
 
-
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
@@ -15,19 +14,22 @@
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-      @if(!Login()){
+        @if (!Login())
+        {
 
-        <MudPaper Width="250px" Elevation="0" Class="py-1">
-            <MudNavMenu Margin="Margin.Dense" Color="Color.Warning">
-                <MudNavLink Href="/dashboard">Dashboard</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.Prefix" Href="/Inflow">Inflow</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.Prefix" Href="/transaction">Transaction</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.Prefix" Href="/outflow">Outflow</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.Prefix" Href="/debts">Debts</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.Prefix" Href="/transactionlist">Transaction List</MudNavLink>
-            </MudNavMenu>
-        </MudPaper>
-      }
+            <MudPaper Width="250px" Elevation="0" Class="py-1">
+                <MudNavMenu Margin="Margin.Dense" Color="Color.Warning">
+                    <MudNavLink Href="/dashboard">Dashboard</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.Prefix" Href="/Inflow">Inflow</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.Prefix" Href="/transaction">Transaction</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.Prefix" Href="/outflow">Outflow</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.Prefix" Href="/debts">Debts</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.Prefix" Href="/transactionlist">Transaction List</MudNavLink>
+                    <!-- Logout button -->
+                    <MudButton OnClick="Logout" Color="Color.Primary" FullWidth>Logout</MudButton>
+                </MudNavMenu>
+            </MudPaper>
+        }
     </MudDrawer>
     <MudMainContent>
         <CascadingValue Value="@_globalState">
@@ -35,6 +37,7 @@
         </CascadingValue>
     </MudMainContent>
 </MudLayout>
+
 @code {
     bool _drawerOpen = true;
 
@@ -42,10 +45,15 @@
     {
         _drawerOpen = !_drawerOpen;
     }
+
     private bool Login()
     {
         return Nav.Uri.EndsWith("/login", StringComparison.OrdinalIgnoreCase);
     }
 
-   
+    // Logout method to navigate to the login page
+    private void Logout()
+    {
+        Nav.NavigateTo("/login");
+    }
 }
